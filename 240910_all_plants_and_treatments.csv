@@ -1,0 +1,177 @@
+Species,Soil,Plant,Tape_color
+Douglas fir,PS,1,B
+Douglas fir,PS,2,Y
+Douglas fir,PS,3,O
+Douglas fir,PS,4,G
+Douglas fir,PS,5,O
+Douglas fir,PS,6,O
+Douglas fir,PS,7,NA
+Douglas fir,PS,8,Y
+Douglas fir,PS,9,G
+Douglas fir,PS,10,Y
+Douglas fir,PS,11,B
+Douglas fir,PS,12,G
+Douglas fir,PS,13,B
+Douglas fir,PS,14,B
+Douglas fir,PS,15,B
+Douglas fir,PS,16,G
+Douglas fir,PS,17,Y
+Douglas fir,PS,18,G
+Douglas fir,PS,19,Y
+Douglas fir,PS,20,G
+Douglas fir,PS,21,O
+Douglas fir,PS,22,O
+Poplar,PS,23,G
+Poplar,PS,24,O
+Poplar,PS,25,Y
+Poplar,PS,26,O
+Poplar,PS,27,O
+Poplar,PS,28,B
+Poplar,PS,29,G
+Poplar,PS,30,O
+Poplar,PS,31,NA
+Poplar,PS,32,Y
+Poplar,PS,33,Y
+Poplar,PS,34,Y
+Poplar,PS,35,O
+Poplar,PS,36,G
+Poplar,PS,37,B
+Poplar,PS,38,G
+Poplar,PS,39,G
+Poplar,PS,40,O
+Poplar,PS,41,O
+Poplar,PS,42,B
+Poplar,PS,43,Y
+Poplar,PS,44,Y
+Douglas fir,PE,45,Y
+Douglas fir,PE,46,O
+Douglas fir,PE,47,G
+Douglas fir,PE,48,Y
+Douglas fir,PE,49,O
+Douglas fir,PE,50,G
+Douglas fir,PE,51,G
+Douglas fir,PE,52,B
+Douglas fir,PE,53,O
+Douglas fir,PE,54,Y
+Douglas fir,PE,55,B
+Douglas fir,PE,56,O
+Douglas fir,PE,57,Y
+Douglas fir,PE,58,G
+Douglas fir,PE,59,O
+Douglas fir,PE,60,G
+Douglas fir,PE,61,O
+Douglas fir,PE,62,Y
+Douglas fir,PE,63,Y
+Douglas fir,PE,64,B
+Douglas fir,PE,65,B
+Douglas fir,PE,66,B
+Poplar,PE,67,O
+Poplar,PE,68,B
+Poplar,PE,69,Y
+Poplar,PE,70,O
+Poplar,PE,71,B
+Poplar,PE,72,B
+Poplar,PE,73,G
+Poplar,PE,74,Y
+Poplar,PE,75,Y
+Poplar,PE,76,G
+Poplar,PE,77,G
+Poplar,PE,78,B
+Poplar,PE,79,G
+Poplar,PE,80,O
+Poplar,PE,81,O
+Poplar,PE,82,B
+Poplar,PE,83,O
+Poplar,PE,84,Y
+Poplar,PE,85,G
+Poplar,PE,86,Y
+Poplar,PE,87,Y
+Poplar,PE,88,B
+Douglas fir,DFS,89,Y
+Douglas fir,DFS,90,O
+Douglas fir,DFS,91,G
+Douglas fir,DFS,92,B
+Douglas fir,DFS,93,O
+Douglas fir,DFS,94,G
+Douglas fir,DFS,95,O
+Douglas fir,DFS,96,G
+Douglas fir,DFS,97,B
+Douglas fir,DFS,98,O
+Douglas fir,DFS,99,Y
+Douglas fir,DFS,100,B
+Douglas fir,DFS,110,B
+Douglas fir,DFS,111,O
+Douglas fir,DFS,112,Y
+Douglas fir,DFS,113,G
+Douglas fir,DFS,114,O
+Douglas fir,DFS,115,O
+Douglas fir,DFS,116,Y
+Douglas fir,DFS,117,B
+Douglas fir,DFS,118,G
+Douglas fir,DFS,119,Y
+Poplar,DFS,101,Y
+Poplar,DFS,102,Y
+Poplar,DFS,103,Y
+Poplar,DFS,104,B
+Poplar,DFS,105,G
+Poplar,DFS,106,B
+Poplar,DFS,107,G
+Poplar,DFS,108,O
+Poplar,DFS,109,G
+Poplar,DFS,120,B
+Poplar,DFS,121,B
+Poplar,DFS,122,Y
+Poplar,DFS,123,G
+Poplar,DFS,124,B
+Poplar,DFS,125,O
+Poplar,DFS,126,B
+Poplar,DFS,127,O
+Poplar,DFS,128,B
+Poplar,DFS,129,O
+Poplar,DFS,130,B
+Poplar,DFS,131,G
+Poplar,DFS,132,O
+Douglas fir,DE,133,G
+Douglas fir,DE,134,O
+Douglas fir,DE,135,B
+Douglas fir,DE,136,Y
+Douglas fir,DE,137,B
+Douglas fir,DE,138,O
+Douglas fir,DE,139,O
+Douglas fir,DE,140,Y
+Douglas fir,DE,141,O
+Douglas fir,DE,142,B
+Douglas fir,DE,143,O
+Douglas fir,DE,144,Y
+Douglas fir,DE,145,Y
+Douglas fir,DE,146,B
+Douglas fir,DE,147,G
+Douglas fir,DE,148,B
+Douglas fir,DE,149,G
+Douglas fir,DE,150,Y
+Douglas fir,DE,151,G
+Douglas fir,DE,152,O
+Douglas fir,DE,153,Y
+Douglas fir,DE,154,G
+Poplar,DE,155,G
+Poplar,DE,156,O
+Poplar,DE,157,B
+Poplar,DE,158,G
+Poplar,DE,159,G
+Poplar,DE,160,Y
+Poplar,DE,161,G
+Poplar,DE,162,Y
+Poplar,DE,163,O
+Poplar,DE,164,B
+Poplar,DE,165,G
+Poplar,DE,166,B
+Poplar,DE,167,Y
+Poplar,DE,168,Y
+Poplar,DE,169,Y
+Poplar,DE,170,O
+Poplar,DE,171,O
+Poplar,DE,172,B
+Poplar,DE,173,O
+Poplar,DE,174,B
+Poplar,DE,175,B
+Poplar,DE,176,Y

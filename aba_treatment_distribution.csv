@@ -1,0 +1,35 @@
+Species,Soil,Tape_color,count
+Douglas fir,DE,B,5
+Douglas fir,DE,G,5
+Douglas fir,DE,O,6
+Douglas fir,DE,Y,6
+Douglas fir,DFS,B,5
+Douglas fir,DFS,G,5
+Douglas fir,DFS,O,7
+Douglas fir,DFS,Y,5
+Douglas fir,PE,B,5
+Douglas fir,PE,G,5
+Douglas fir,PE,O,6
+Douglas fir,PE,Y,6
+Douglas fir,PS,B,5
+Douglas fir,PS,G,6
+Douglas fir,PS,O,5
+Douglas fir,PS,Y,5
+Douglas fir,PS,NA,1
+Poplar,DE,B,6
+Poplar,DE,G,5
+Poplar,DE,O,5
+Poplar,DE,Y,6
+Poplar,DFS,B,8
+Poplar,DFS,G,5
+Poplar,DFS,O,5
+Poplar,DFS,Y,4
+Poplar,PE,B,6
+Poplar,PE,G,5
+Poplar,PE,O,5
+Poplar,PE,Y,6
+Poplar,PS,B,3
+Poplar,PS,G,5
+Poplar,PS,O,7
+Poplar,PS,Y,6
+Poplar,PS,NA,1

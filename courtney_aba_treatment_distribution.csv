@@ -1,0 +1,33 @@
+species,treatment,flag,count
+doug fir,DFE,blue,5
+doug fir,DFE,green,5
+doug fir,DFE,orange,6
+doug fir,DFE,yellow,6
+doug fir,DFS,blue,5
+doug fir,DFS,green,5
+doug fir,DFS,orange,7
+doug fir,DFS,yellow,5
+doug fir,PE,blue,5
+doug fir,PE,green,5
+doug fir,PE,orange,6
+doug fir,PE,yellow,6
+doug fir,PS,blue,6
+doug fir,PS,green,6
+doug fir,PS,orange,5
+doug fir,PS,yellow,5
+poplar,DFE,blue,6
+poplar,DFE,green,5
+poplar,DFE,orange,5
+poplar,DFE,yellow,6
+poplar,DFS,blue,7
+poplar,DFS,green,5
+poplar,DFS,orange,6
+poplar,DFS,yellow,4
+poplar,PE,blue,7
+poplar,PE,green,5
+poplar,PE,orange,5
+poplar,PE,yellow,5
+poplar,PS,blue,5
+poplar,PS,green,5
+poplar,PS,orange,6
+poplar,PS,yellow,6
