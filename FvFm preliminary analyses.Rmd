@@ -1,0 +1,118 @@
+---
+title: "Preliminary FvFm Analyses"
+author: "Laura Bogar"
+date: "2024-10-24"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r load packages and data}
+library(tidyverse)
+source("read_LI-600.R")
+
+poplar_file_path = "../data/export_2024_10_21_164809/Bogar FvFm/2024-10-15/Bogar FvFm_LMB_2024_10_15_16_28_28_1.csv"
+dougfir_file_path = "../data/600N_export/Bogar FvFm 600N/2024-10-15/Bogar FvFm 600N_LMB_2024_10_15_16_24_39_1.csv"
+treatments = read_csv("240910_all_plants_and_treatments.csv")
+
+```
+```{r cleaning up data}
+dark_fluor_pop = read_li600_data(poplar_file_path)
+dark_fluor_pop$plantID = dark_fluor_pop$`Plant number`
+dark_fluor_doug = read_li600_data(dougfir_file_path)
+dark_fluor_doug$plantID = dark_fluor_doug$`Plant number`
+
+treatments$plantID = str_pad(treatments$Plant, width = 3, pad = "0")
+treatments$ABA = fct_recode(treatments$Tape_color, 
+                            "3 wks" = "O", 
+                            "2 wks" = "Y",
+                            "0 wks" = "G", 
+                            "None" = "B") %>%
+  fct_relevel("0 wks", after = Inf)
+treatments$soil = fct_recode(treatments$Soil, 
+                            "Douglas fir - live" = "DE",
+                            "Douglas fir - sterilized" = "DFS",
+                            "Poplar - live" = "PE",
+                            "Poplar - sterilized" = "PS")
+
+pop_fluor_with_tx = left_join(dark_fluor_pop, treatments)
+doug_fluor_with_tx = left_join(dark_fluor_doug, treatments)
+
+# The first few measurements I flagged because we repeated
+# them on the two different instruments; may be redundant,
+# but these measurements are otherwise valid. 
+# We should check at some point to make sure
+# the 600 and 600N were indeed giving similar values.
+
+pop_fluor_with_tx_noflag = subset(pop_fluor_with_tx, is.na(remark))
+doug_fluor_with_tx_noflag = subset(doug_fluor_with_tx, is.na(remark))
+
+
+pop_fluor_summ = pop_fluor_with_tx_noflag %>% group_by(plantID, Species, soil, ABA) %>%
+  summarize(meanfvfm = mean(`Fv/Fm`))
+doug_fluor_summ = doug_fluor_with_tx_noflag %>% group_by(plantID, Species, soil, ABA) %>%
+  summarize(meanfvfm = mean(`Fv/Fm`))
+
+both_fluor_summ = full_join(pop_fluor_summ, doug_fluor_summ)
+both_fluor_summ = both_fluor_summ[!is.na(both_fluor_summ$Species),]
+both_fluor_summ = both_fluor_summ[!is.na(both_fluor_summ$ABA),]
+```
+```{r checking 600 vs 600N}
+#I flagged (or meant to flag, did skip a couple) the first 18
+# measurements on the Doug firs with the 600N, and it looks
+# like the first 15 measurements on the 600. Maybe it doesn't
+# matter exactly which got flagged.
+
+tocomp600 = pop_fluor_with_tx[pop_fluor_with_tx$`Plant number` %in% doug_fluor_with_tx$`Plant number`,]
+tocomp600N = doug_fluor_with_tx[doug_fluor_with_tx$`Plant number` %in% pop_fluor_with_tx$`Plant number`,]
+
+summ600 = tocomp600 %>% group_by(`Plant number`, configName, Species) %>%
+  summarize(meanfvfm = mean(`Fv/Fm`))
+
+summ600N = tocomp600N %>% group_by(`Plant number`, configName, Species) %>%
+  summarize(meanfvfm = mean(`Fv/Fm`))
+
+dark_fluor_comparison = full_join(summ600, summ600N)
+dark_fluor_comparison$instrument = fct_recode(dark_fluor_comparison$configName, "LI-600" = "Bogar FvFm", "LI-600N" = "Bogar FvFm 600N")
+
+```
+
+Does it matter which instrument we use?
+
+```{r plot comparing 600N and 600, echo=FALSE}
+ggplot(dark_fluor_comparison, aes(x = instrument, y = meanfvfm, fill = Species)) +
+  geom_boxplot(outlier.shape = NA, alpha = 0.6) +
+  geom_jitter(position = position_jitterdodge(jitter.width = 0.1), size = 1.5, alpha = 0.6) + 
+  labs(x = "Instrument used",
+       y = "Fv/Fm as of 15 Oct") +
+  theme_minimal()
+```
+This doesn't look great. Seems like the LI-600 is consistently too low when measuring Douglas fir.
+
+```{r paired analysis for 600 vs 600N}
+summ600forpaired = summ600 %>% group_by(Species) %>%
+  select(`Plant number`, Species, meas600 = meanfvfm)
+summ600Nforpaired = summ600N %>% group_by(Species) %>%
+  select(everything(), -configName, meas600N = meanfvfm)
+paired = left_join(summ600forpaired, summ600Nforpaired)
+paired = paired %>% mutate(difference = meas600 - meas600N)
+
+diffbysp = t.test(paired$difference ~ paired$Species)
+diffbysp
+
+overalldiff = t.test(paired$meas600, paired$meas600N)
+overalldiff
+
+```
+```{r plotting differences 600 vs 600N, echo=FALSE}
+ggplot(paired, aes(x = Species, y = difference)) +
+  geom_boxplot(outlier.shape = NA, alpha = 0.6) +
+  geom_point(size = 1.5, alpha = 0.6) + 
+  labs(x = "Plant Species",
+       y = "Difference in Fv/Fm: 600N minus 600") +
+  theme_minimal()
+```
+Conclusion: I think the LI-600 can sometimes underestimate Fv/Fm on the Douglas fir seedlings; perhaps the laser/optics aren't set up to accommodate masses of needles that have gaps and things in them? The 600 and 600N agreed almost entirely on the poplar leaves, just not on the needles. This difference is not statistically significant with our very small sample size, but it seems big enough that I'm not inclined to use the "wrong" instrument on a needle plant ever again. (600N did fine on poplar, though, and I will happily use it on leaves in the future.)
