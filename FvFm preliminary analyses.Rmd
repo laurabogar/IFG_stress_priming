@@ -116,3 +116,5 @@ ggplot(paired, aes(x = Species, y = difference)) +
   theme_minimal()
 ```
 Conclusion: I think the LI-600 can sometimes underestimate Fv/Fm on the Douglas fir seedlings; perhaps the laser/optics aren't set up to accommodate masses of needles that have gaps and things in them? The 600 and 600N agreed almost entirely on the poplar leaves, just not on the needles. This difference is not statistically significant with our very small sample size, but it seems big enough that I'm not inclined to use the "wrong" instrument on a needle plant ever again. (600N did fine on poplar, though, and I will happily use it on leaves in the future.)
+
+Mostly, though, I've learned that we need to do a more thorough test of this. 3 points for Populus isn't enough to be sure the 600N is doing a good job. I THINK it is, though.
