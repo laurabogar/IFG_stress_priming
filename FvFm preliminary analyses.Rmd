@@ -90,6 +90,7 @@ ggplot(dark_fluor_comparison, aes(x = instrument, y = meanfvfm, fill = Species))
        y = "Fv/Fm as of 15 Oct") +
   theme_minimal()
 ```
+
 This doesn't look great. Seems like the LI-600 is consistently too low when measuring Douglas fir.
 
 ```{r paired analysis for 600 vs 600N}

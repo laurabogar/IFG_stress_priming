@@ -1,0 +1,140 @@
+---
+title: "Poplar preliminary light adapted analyses"
+author: "Laura Bogar"
+date: "2024-10-29"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r load packages and data}
+library(tidyverse)
+source("read_LI-600.R")
+
+poplar_path1 = "../data/export_2024_10_21_164809/Bogar light/2024-10-18/Bogar light_LMB_2024_10_18_15_26_20_1.csv"
+poplar_path2 = "../data/export_2024_10_21_164809/Bogar light/2024-10-18/Bogar light_LMB_2024_10_21_16_34_30_1.csv"
+poplar_path3 = "../data/export_2024_10_21_164809/Bogar light/2024-10-18/Bogar light_LMB_2024_10_21_16_40_52_1.csv"
+treatments = read_csv("240910_all_plants_and_treatments.csv")
+
+```
+```{r cleaning up data}
+pop1 = read_li600_data(poplar_path1)
+pop2 = read_li600_data(poplar_path2)
+pop3 = read_li600_data(poplar_path3)
+
+allpop = full_join(pop1, pop2)
+allpop = full_join(allpop, pop3)
+
+allpop$plantID = allpop$`Plant number`
+
+
+treatments$plantID = str_pad(treatments$Plant, width = 3, pad = "0")
+treatments$ABA = fct_recode(treatments$Tape_color, 
+                            "3 wks" = "O", 
+                            "2 wks" = "Y",
+                            "0 wks" = "G", 
+                            "None" = "B") %>%
+  fct_relevel("0 wks", after = Inf)
+
+treatments$soil = fct_recode(treatments$Soil, 
+                            "Douglas fir - live" = "DE",
+                            "Douglas fir - sterilized" = "DFS",
+                            "Poplar - live" = "PE",
+                            "Poplar - sterilized" = "PS")
+
+allpop_with_tx = left_join(allpop, treatments)
+
+allpop_with_tx$continuous_time = hms(allpop_with_tx$Time)
+
+allpop_with_tx_noflag = subset(allpop_with_tx, is.na(remark))
+
+
+
+
+pop_summ = allpop_with_tx_noflag %>% group_by(plantID, Species, soil, ABA) %>%
+  summarize(mean_gsw = mean(as.numeric(gsw)), mean_PhiPS2 = mean(PhiPS2), num_obs = n())
+
+```
+
+Quick quality control: did gsw or PhiPS2 change consistently through time as we measured?
+
+```{r Checking measurement drift, echo=FALSE}
+ggplot(allpop_with_tx_noflag, aes(x = continuous_time, y = as.numeric(gsw))) +
+  geom_point() +
+  geom_smooth(method = "lm", formula = y~x)
+```
+
+Negative gsw are obviously wrong; leakage
+around seal? Looks like a few bad values in the middle of the run.
+```{r Get rid of erroneous gsw}
+allpop_forgsw = subset(allpop_with_tx_noflag,
+                       as.numeric(gsw) > 0)
+```
+
+```{r New gsw plot, echo=FALSE}
+ggplot(allpop_forgsw, aes(x = continuous_time, y = as.numeric(gsw))) +
+  geom_point() +
+  geom_smooth(method = "lm", formula = y~x)
+```
+```{r Stats for gsw instrument drift}
+
+drift_gsw = lm(as.numeric(gsw) ~ continuous_time, data = allpop_forgsw)
+summary(drift_gsw) # Looks good.
+
+```
+GSW looks okay to me. How about PhiPS2?
+
+```{r Checking PhiPS2, echo=FALSE}
+ggplot(allpop_with_tx_noflag, aes(x = continuous_time, y = PhiPS2)) +
+  geom_point() +
+  geom_smooth(method = "lm", formula = y~x)
+```
+
+Hmmm.... this DEFINITELY trends upward through time. I think this is what we would expect, since the sun is getting higher and the plants are continuing to ramp up their photosynthesis. I don't super trust the zero values, though. I suspect these are instances where a reading was accidentally taken but the instrument was not clamped to a leaf.
+
+```{r}
+allpop_forPhiPS2 = subset(allpop_with_tx_noflag, PhiPS2 > 0.01)
+```
+
+```{r}
+ggplot(allpop_forPhiPS2, aes(x = continuous_time, y = PhiPS2)) +
+  geom_point() +
+  geom_smooth(method = "lm", formula = y~x)
+```
+Okay, maybe these values are all okay? Definite upward trend. Can we correct for it?
+
+```{r}
+PhiPS2_model = lm(PhiPS2 ~ continuous_time, data = allpop_forPhiPS2)
+summary(PhiPS2_model)
+# Doesn't come out as significant, but the pattern jumps out to me either way
+
+# PhiPS2_model_lmer = lmer(PhiPS2 ~ continuous_time + (1|ABA), data = allpop_forPhiPS2)
+# summary(PhiPS2_model_lmer)
+# Still not significant? Seems impossible, but what do I know?
+```
+
+
+```{r}
+ggplot(allpop_forPhiPS2, aes(x = continuous_time, y = PhiPS2, color = ABA)) +
+  geom_point()
+```
+
+
+
+
+
+How did PhiPS2 (light adapted chlorophyll fluorescence) change with our treatments?
+```{r Light adapted fluorescence, echo=FALSE}
+
+# ggplot(pop_summ, aes(x = instrument, y = meanfvfm, fill = Species)) +
+#   geom_boxplot(outlier.shape = NA, alpha = 0.6) +
+#   geom_jitter(position = position_jitterdodge(jitter.width = 0.1), size = 1.5, alpha = 0.6) + 
+#   labs(x = "Instrument used",
+#        y = "Fv/Fm as of 15 Oct") +
+#   theme_minimal()
+
+```
+
