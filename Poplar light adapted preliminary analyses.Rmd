@@ -5,12 +5,22 @@ date: "2024-10-29"
 output: html_document
 ---
 
+In this document, I explore our light-adapted chlorophyll fluorescence (PhiPS2) and stomatal conductance (gsw) data taken using an LI-600 instrument on Populus plants harvested as a part of our IFG stress priming experiment on 18 Oct 2024.
+
+Please note that, in this rough version of the analyses, I have not done some quality control that we should plan to do prior to publication. This may include (but is not limited to):
+
+- identifying the ABA treatment of the plant that is currently listed as "NA" so it can be included in the analyses
+
+- figuring out why some gsw values came out as negative. Were those just instances where the instrument was not fully clamped to the leaf, as I suspect? Or was there something more insidious happening that might cause us to reevaluate the other data?
+
+- Track down missing data as needed after QC filtering.
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
 
-```{r load packages and data}
+```{r load packages and data, results = 'hide', message=FALSE}
 library(tidyverse)
 source("read_LI-600.R")
 
@@ -20,7 +30,7 @@ poplar_path3 = "../data/export_2024_10_21_164809/Bogar light/2024-10-18/Bogar li
 treatments = read_csv("240910_all_plants_and_treatments.csv")
 
 ```
-```{r cleaning up data}
+```{r cleaning up data, results = 'hide', message=FALSE}
 pop1 = read_li600_data(poplar_path1)
 pop2 = read_li600_data(poplar_path2)
 pop3 = read_li600_data(poplar_path3)
@@ -49,46 +59,44 @@ allpop_with_tx = left_join(allpop, treatments)
 
 allpop_with_tx$continuous_time = hms(allpop_with_tx$Time)
 
+allpop_with_tx$posix_time = as.POSIXct(allpop_with_tx$Time, format = "%H:%M:%S")
+
 allpop_with_tx_noflag = subset(allpop_with_tx, is.na(remark))
-
-
-
-
-pop_summ = allpop_with_tx_noflag %>% group_by(plantID, Species, soil, ABA) %>%
-  summarize(mean_gsw = mean(as.numeric(gsw)), mean_PhiPS2 = mean(PhiPS2), num_obs = n())
 
 ```
 
 Quick quality control: did gsw or PhiPS2 change consistently through time as we measured?
 
 ```{r Checking measurement drift, echo=FALSE}
-ggplot(allpop_with_tx_noflag, aes(x = continuous_time, y = as.numeric(gsw))) +
+ggplot(allpop_with_tx_noflag, aes(x = posix_time, y = as.numeric(gsw))) +
   geom_point() +
   geom_smooth(method = "lm", formula = y~x)
 ```
 
 Negative gsw are obviously wrong; leakage
 around seal? Looks like a few bad values in the middle of the run.
+
+Let's get rid of them:
 ```{r Get rid of erroneous gsw}
 allpop_forgsw = subset(allpop_with_tx_noflag,
                        as.numeric(gsw) > 0)
 ```
 
 ```{r New gsw plot, echo=FALSE}
-ggplot(allpop_forgsw, aes(x = continuous_time, y = as.numeric(gsw))) +
+ggplot(allpop_forgsw, aes(x = posix_time, y = as.numeric(gsw))) +
   geom_point() +
   geom_smooth(method = "lm", formula = y~x)
 ```
 ```{r Stats for gsw instrument drift}
 
-drift_gsw = lm(as.numeric(gsw) ~ continuous_time, data = allpop_forgsw)
+drift_gsw = lm(as.numeric(gsw) ~ posix_time, data = allpop_forgsw)
 summary(drift_gsw) # Looks good.
 
 ```
 GSW looks okay to me. How about PhiPS2?
 
 ```{r Checking PhiPS2, echo=FALSE}
-ggplot(allpop_with_tx_noflag, aes(x = continuous_time, y = PhiPS2)) +
+ggplot(allpop_with_tx_noflag, aes(x = posix_time, y = PhiPS2)) +
   geom_point() +
   geom_smooth(method = "lm", formula = y~x)
 ```
@@ -96,45 +104,103 @@ ggplot(allpop_with_tx_noflag, aes(x = continuous_time, y = PhiPS2)) +
 Hmmm.... this DEFINITELY trends upward through time. I think this is what we would expect, since the sun is getting higher and the plants are continuing to ramp up their photosynthesis. I don't super trust the zero values, though. I suspect these are instances where a reading was accidentally taken but the instrument was not clamped to a leaf.
 
 ```{r}
-allpop_forPhiPS2 = subset(allpop_with_tx_noflag, PhiPS2 > 0.01)
+allpop_forPhiPS2 = subset(allpop_with_tx_noflag, PhiPS2 > 0.01) # get rid of 0s for now
 ```
 
 ```{r}
-ggplot(allpop_forPhiPS2, aes(x = continuous_time, y = PhiPS2)) +
+ggplot(allpop_forPhiPS2, aes(x = posix_time, y = PhiPS2)) +
   geom_point() +
   geom_smooth(method = "lm", formula = y~x)
 ```
-Okay, maybe these values are all okay? Definite upward trend. Can we correct for it?
 
-```{r}
-PhiPS2_model = lm(PhiPS2 ~ continuous_time, data = allpop_forPhiPS2)
+At least I believe all these values are real now. Let's correct for the upward trend!
+
+```{r Correcting for upward trend}
+PhiPS2_model = lm(PhiPS2 ~ posix_time, data = allpop_forPhiPS2)
 summary(PhiPS2_model)
-# Doesn't come out as significant, but the pattern jumps out to me either way
 
-# PhiPS2_model_lmer = lmer(PhiPS2 ~ continuous_time + (1|ABA), data = allpop_forPhiPS2)
-# summary(PhiPS2_model_lmer)
-# Still not significant? Seems impossible, but what do I know?
+slope = PhiPS2_model$coefficients[2]
+
+allpop_forPhiPS2_corrected = allpop_forPhiPS2 %>% mutate(correctedPhiPS2 = PhiPS2 - slope*(posix_time - posix_time[1]))
+
+ggplot(allpop_forPhiPS2_corrected, aes(x = posix_time, y = correctedPhiPS2)) +
+  geom_point() +
+  geom_smooth(method = "lm", formula = y~x)
+
+PhiPS2_model_corrected = lm(as.numeric(correctedPhiPS2) ~ posix_time, data = allpop_forPhiPS2_corrected)
+summary(PhiPS2_model_corrected)
+
 ```
 
+Great! I think that worked well.
+
+
+***Light-adapted chlorophyll fluorescence (PhiPS2) analyses***
+
+Now that we have somewhat quality-controlled data: How did PhiPS2 (light adapted chlorophyll fluorescence) change with our treatments?
+```{r Light adapted fluorescence, echo=FALSE, message=FALSE}
+pop_summ_PhiPS2 = allpop_forPhiPS2_corrected %>% group_by(plantID, Species, soil, ABA) %>%
+  summarize(mean_PhiPS2 = mean(PhiPS2), num_obs = n()) %>% subset(!is.na(ABA))
+# There's one NA in the ABA treatments,
+# let's look up what plant that is later.
+
+ggplot(pop_summ_PhiPS2, aes(x = soil, y = mean_PhiPS2, fill = ABA)) +
+  geom_boxplot(outlier.shape = NA, alpha = 0.6) +
+  geom_jitter(position = position_jitterdodge(jitter.width = 0.1), size = 1.5, alpha = 0.6) +
+  labs(x = "Soil treatment",
+       y = "PhiPS2 just prior to harvest\n(corrected for time of observation)") +
+  theme_minimal()
+
+```
+
+Very cool!
+
+My take-homes: PhiPS2 response is sensitive to both microbes and ABA treatments. Receiving ABA just prior to drought was most helpful to plants for maintaining PhiPS2; receiving either live poplar soil or sterilized Douglas fir soil rescued the plants that hadn't received ABA (recently, or at all). Sterilized poplar soil and live Doug fir soil were both bad for plant drought tolerance.
+
+***Stomatal conductance (gsw) analyses***
+
+And what about stomatal conductance (gsw)?
 
 ```{r}
-ggplot(allpop_forPhiPS2, aes(x = continuous_time, y = PhiPS2, color = ABA)) +
-  geom_point()
+pop_summ_gsw = allpop_forgsw %>% group_by(plantID, Species, soil, ABA) %>%
+  summarize(mean_gsw = mean(as.numeric(gsw)), num_obs = n()) %>% subset(!is.na(ABA))
+
+ggplot(pop_summ_gsw, aes(x = soil, y = mean_gsw, fill = ABA)) +
+  geom_boxplot(outlier.shape = NA, alpha = 0.6) +
+  geom_jitter(position = position_jitterdodge(jitter.width = 0.1), size = 1.5, alpha = 0.6) +
+  labs(x = "Soil treatment",
+       y = "Stomatal conductance just prior to harvest\n(mmol water m^-2 s^-1)") +
+  theme_minimal()
+```
+
+Interesting contrast with the PhiPS2!
+
+My take-homes: Stomatal conductance responded principally to ABA, much less to microbial treatments. Is this maybe because chlorophyll fluorescence is more impacted by nutritional differences, while stomatal conductance is just a water thing? Getting ABA right before the drought was most helpful, BUT the sterilized Doug fir soil for some reason was able to rescue some of the no-ABA plants.
+
+Maybe we had something tasty in the sterilized Doug fir soil. These are interesting results!
+
+It's possible that the story here is: Hey look, physiologists, microbes have a similar magnitude of impact as ABA! And hey, nursery folks: adding ABA (or otherwise directly manipulating plant hormones) could directly impact plant drought tolerance! Looking forward to fitting this into our gene expression data down the road.
+
+Finally, let's see the statistical results backing up the patterns we've observed in the boxplots. 
+
+First, PhiPS2:
+
+```{r Statistics for PhiPS2 boxplots}
+
+PhiPS2_full_model = lm(as.numeric(correctedPhiPS2) ~ soil * ABA, data = allpop_forPhiPS2_corrected)
+PhiPS2_anova = aov(PhiPS2_full_model)
+summary(PhiPS2_anova) # yep, all significant
+TukeyHSD(PhiPS2_anova)
+```
+
+And then gsw:
+
+```{r Statistics for gsw boxplot}
+gsw_full_model = lm(gsw ~ soil * ABA, data = allpop_forgsw)
+gsw_anova = aov(gsw_full_model)
+summary(gsw_anova) # yep, all significant
+TukeyHSD(gsw_anova)
 ```
 
 
-
-
-
-How did PhiPS2 (light adapted chlorophyll fluorescence) change with our treatments?
-```{r Light adapted fluorescence, echo=FALSE}
-
-# ggplot(pop_summ, aes(x = instrument, y = meanfvfm, fill = Species)) +
-#   geom_boxplot(outlier.shape = NA, alpha = 0.6) +
-#   geom_jitter(position = position_jitterdodge(jitter.width = 0.1), size = 1.5, alpha = 0.6) + 
-#   labs(x = "Instrument used",
-#        y = "Fv/Fm as of 15 Oct") +
-#   theme_minimal()
-
-```
 
