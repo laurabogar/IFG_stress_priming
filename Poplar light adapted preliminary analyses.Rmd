@@ -24,9 +24,9 @@ knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 source("read_LI-600.R")
 
-poplar_path1 = "../data/export_2024_10_21_164809/Bogar light/2024-10-18/Bogar light_LMB_2024_10_18_15_26_20_1.csv"
-poplar_path2 = "../data/export_2024_10_21_164809/Bogar light/2024-10-18/Bogar light_LMB_2024_10_21_16_34_30_1.csv"
-poplar_path3 = "../data/export_2024_10_21_164809/Bogar light/2024-10-18/Bogar light_LMB_2024_10_21_16_40_52_1.csv"
+poplar_path1 = "../data/600_export/Bogar light/2024-10-18/Bogar light_LMB_2024_10_18_15_26_20_1.csv"
+poplar_path2 = "../data/600_export/Bogar light/2024-10-18/Bogar light_LMB_2024_10_21_16_34_30_1.csv"
+poplar_path3 = "../data/600_export/Bogar light/2024-10-18/Bogar light_LMB_2024_10_21_16_40_52_1.csv"
 treatments = read_csv("240910_all_plants_and_treatments.csv")
 
 ```

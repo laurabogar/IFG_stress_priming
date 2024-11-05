@@ -1,0 +1,128 @@
+---
+title: "Douglas fir preliminary analyses"
+author: "Laura Bogar"
+date: "2024-11-05"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+A preliminary exploration of light-adapted chlorophyll fluorescence and stomatal conductance, and dark-adapted chlorophyll fluorescence from the Douglas fir seedlings in our IFG stress priming experiment.
+
+To do:
+- account for upward drift of PhiPS2, then make some plots and do some stats
+- Look at gsw data -- and see if you can make sense of it even if the needles didn't always fill the chamber completely
+
+```{r load packages and data, results = 'hide', message=FALSE}
+library(tidyverse)
+source("read_LI-600.R")
+
+# NOTE: IFG instrument was not adjusted for daylight savings time, so time stamps are one hour too early.
+
+doug_path1 = "../data/241104 Pseudosuga dark adapted FvFm Bogar instrument/2024-11-04/Bogar FvFm 600N_LMB_2024_11_04_16_24_47_1.csv"
+doug_path2 = "../data/241104 Pseudotsuga Bogar FvFm 600N IFG instrument/2024-11-04/Bogar FvFm 600N_LMB_2024_11_04_15_41_19_1.csv"
+doug_path3 = "../data/241104 Pseudotsuga Bogar light Bogar instrument/2024-11-04/Bogar light N_LB_2024_11_04_13_27_41_1.csv"
+doug_path4 = "../data/241104 Pseudotsuga Bogar light Bogar instrument/2024-11-04/Bogar light N_LB_2024_11_04_14_04_25_1.csv"
+doug_path5 = "../data/241104 Pseudotsuga Bogar light IFG instrument/2024-11-04/Bogar light N_LB_2024_11_04_14_12_02_1.csv"
+treatments = read_csv("240910_all_plants_and_treatments.csv")
+
+```
+```{r cleaning up data, results = 'hide', message=FALSE}
+doug1 = read_li600_data(doug_path1)
+doug2 = read_li600_data(doug_path2)
+doug3 = read_li600_data(doug_path3)
+doug4 = read_li600_data(doug_path4)
+doug5 = read_li600_data(doug_path5)
+
+# Fixing time stamp issues
+doug1$posix_time = as.POSIXct(doug1$Time, format = "%H:%M:%S")
+
+doug2$posix_time = as.POSIXct(doug2$Time, format = "%H:%M:%S")
+doug2_timecorrected = doug2 %>% mutate(posix_time = posix_time + (60*60))
+
+doug3$posix_time = as.POSIXct(doug3$Time, format = "%H:%M:%S")
+
+doug4$posix_time = as.POSIXct(doug4$Time, format = "%H:%M:%S")
+
+doug5$posix_time = as.POSIXct(doug5$Time, format = "%H:%M:%S")
+doug5_timecorrected = doug5 %>% mutate(posix_time = posix_time + (60*60))
+
+treatments$plantID = str_pad(treatments$Plant, width = 3, pad = "0")
+treatments$ABA = fct_recode(treatments$Tape_color, 
+                            "3 wks" = "O", 
+                            "2 wks" = "Y",
+                            "0 wks" = "G", 
+                            "None" = "B") %>%
+  fct_relevel("0 wks", after = Inf)
+
+treatments$soil = fct_recode(treatments$Soil, 
+                            "Douglas fir - live" = "DE",
+                            "Douglas fir - sterilized" = "DFS",
+                            "Poplar - live" = "PE",
+                            "Poplar - sterilized" = "PS")
+
+# Making dark data frame
+dougdark = full_join(doug1, doug2_timecorrected)
+
+dougdark$plantID = dougdark$`Plant number`
+
+dougdark_with_tx = left_join(dougdark, treatments)
+
+# dougdark_with_tx$posix_time = as.POSIXct(dougdark_with_tx$Time, format = "%H:%M:%S")
+
+dougdark_with_tx_noflag = subset(dougdark_with_tx, is.na(remark))
+
+# Making light data frame
+douglight = full_join(doug3, doug4)
+douglight = full_join(douglight, doug5_timecorrected)
+douglight$plantID = douglight$`Plant number`
+
+douglight_with_tx = left_join(douglight, treatments)
+
+douglight_with_tx_noflag = subset(douglight_with_tx, is.na(remark))
+
+```
+
+How did Fv/Fm look through time?
+
+```{r Checking FvFm, echo=FALSE}
+ggplot(dougdark_with_tx_noflag, aes(x = posix_time, y = `Fv/Fm`)) +
+  geom_point() +
+  geom_smooth(method = "lm", formula = y~x)
+```
+
+```{r Dark adapted fluorescence, echo=FALSE, message=FALSE}
+doug_summ_FvFm = dougdark_with_tx_noflag %>% group_by(plantID, Species, soil, ABA) %>%
+  summarize(mean_FvFm = mean(`Fv/Fm`), num_obs = n()) %>% subset(!is.na(ABA))
+# There's one NA in the ABA treatments,
+# let's look up what plant that is later.
+
+ggplot(doug_summ_FvFm, aes(x = soil, y = mean_FvFm, fill = ABA)) +
+  geom_boxplot(outlier.shape = NA, alpha = 0.6) +
+  geom_jitter(position = position_jitterdodge(jitter.width = 0.1), size = 1.5, alpha = 0.6) +
+  labs(x = "Soil treatment",
+       y = "Pseudotsuga Fv/Fm just prior to harvest") +
+  theme_minimal()
+
+```
+
+```{r ANOVA for Fv/Fm}
+FvFm_doug = lm(as.numeric(`Fv/Fm`) ~ soil * ABA, data = dougdark_with_tx_noflag)
+FvFm_doug_anova = aov(FvFm_doug)
+summary(FvFm_doug_anova) # only soil mattered for doug firs
+TukeyHSD(FvFm_doug_anova) # specifically, Doug fir live did better than any other soil (p < 0.05), especially compared to Poplar live and poplar sterilized (p<<0.01).
+
+```
+
+
+How about PhiPS2?
+
+```{r Checking PhiPS2, echo=FALSE}
+ggplot(douglight_with_tx_noflag, aes(x = posix_time, y = PhiPS2)) +
+  geom_point() +
+  geom_smooth(method = "lm", formula = y~x)
+```
+
+Upward through the day, as happened last time. Many low  values here.
