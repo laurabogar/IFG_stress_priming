@@ -45,5 +45,11 @@ The two Populus gsw files measure different things. Stomata partly close in the 
 - **Plant 122:** its 15 Oct readings were flagged, but the flags were judged to be a mistake. These were the first readings of the session, and the values are normal.
 - **Plant 007 (Douglas-fir):** excluded, because its ABA treatment isn't recorded.
 - **Plant 026:** has no LI-600 readings.
-- **Douglas-fir Fv/Fm:** noisier than Populus. A single needle covers only part of the LI-600N aperture, so the signal is weaker. These readings are kept, and `n_low_signal` shows how many weak readings went into each mean.
+- **Dark adaptation:** whole plants were dark-adapted together for at least 30 minutes in a closed, dark garage, then measured.
+- **Douglas-fir measurement method:** Douglas-fir needles are too small to fill the LI-600N aperture. Each reading was taken on a bunch of needles clamped together, with no attempt at a seal, so that as much chlorophyll as possible was under the sensor. As a result:
+  - The amount of tissue under the sensor varied, so the signal strength (Fm) varied.
+  - Readings from the same plant differ about twice as much as for Populus (median within-plant SD 0.049 vs 0.023).
+  - The absolute Fv/Fm values may be biased by needles overlapping and shading one another, so don't compare them to published conifer values.
+  - Comparisons between treatments look sound. Fm doesn't differ by soil or ABA treatment, and adding Fm as a covariate changes the treatment effects by ≤ 0.003.
+  - `n_low_signal` shows how many weak readings (Fm < 100) went into each plant's mean.
 - **Douglas-fir instruments:** seven plants were measured on both instruments, and their means pool both.
